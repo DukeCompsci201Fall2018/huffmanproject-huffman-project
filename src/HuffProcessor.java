@@ -57,7 +57,6 @@ public class HuffProcessor {
 	 *            Buffered bit stream writing to the output file.
 	 */
 	public void decompress(BitInputStream in, BitOutputStream out){
-		
 		int bits = in.readBits(BITS_PER_INT);
 		if (bits != HUFF_TREE) {
 			throw new HuffException("illegal header starts with " + bits);
@@ -75,12 +74,27 @@ public class HuffProcessor {
 	}
 
 	private void readCompressedBits(HuffNode root, BitInputStream in, BitOutputStream out) {
-		// TODO Auto-generated method stub
-		
+		HuffNode current = root;
+		while (true) {
+			int bits = in.readBits(1);
+			if (bits == -1) {
+				throw new HuffException("bad input, no PSEUDO_EOF");
+			} else {
+				if (bits == 0) current = current.myLeft;
+				else current = current.myRight;
+				
+				if (current.myLeft == null && current.myRight == null) {
+					if (current.myValue == PSEUDO_EOF) break;
+					else {
+						out.writeBits(BITS_PER_WORD, current.myValue);
+						current = root;
+					}
+				}
+			}
+		}
 	}
 
 	private HuffNode readTreeHeader(BitInputStream in) {
-		// TODO Auto-generated method stub
 		int bit = in.readBits(1);
 		if (bit == -1) throw new HuffException(-1 + " is not a legal bit");
 		if (bit == 0) {
